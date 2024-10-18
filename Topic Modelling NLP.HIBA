@@ -1,0 +1,83 @@
+import numpy as np
+
+class LDA:
+    def __init__(self, num_topics, num_iterations, alpha, beta):
+        self.num_topics = num_topics
+        self.num_iterations = num_iterations
+        self.alpha = alpha
+        self.beta = beta
+
+    def fit(self, documents):
+        # Initialize
+        self.documents = documents
+        self.vocab = set(word for document in documents for word in document)
+        self.word2idx = {word: idx for idx, word in enumerate(self.vocab)}
+        self.idx2word = {idx: word for word, idx in self.word2idx.items()}
+        self.num_documents = len(documents)
+        self.vocab_size = len(self.vocab)
+        self.document_topic_counts = np.zeros((self.num_documents, self.num_topics))
+        self.topic_word_counts = np.zeros((self.num_topics, self.vocab_size))
+        self.topic_counts = np.zeros(self.num_topics)
+        self.document_lengths = np.array([len(document) for document in documents])
+        self.document_topic_assignment = [[0 for _ in range(len(document))] for document in documents]
+
+        # Randomly initialize topic assignments
+        for d, document in enumerate(documents):
+            for i, word in enumerate(document):
+                topic = np.random.randint(self.num_topics)
+                self.document_topic_assignment[d][i] = topic
+                word_idx = self.word2idx[word]
+                self.document_topic_counts[d, topic] += 1
+                self.topic_word_counts[topic, word_idx] += 1
+                self.topic_counts[topic] += 1
+
+        # Gibbs sampling
+        for _ in range(self.num_iterations):
+            for d, document in enumerate(documents):
+                for i, word in enumerate(document):
+                    topic = self.document_topic_assignment[d][i]
+                    word_idx = self.word2idx[word]
+
+                    # Exclude current assignment
+                    self.document_topic_counts[d, topic] -= 1
+                    self.topic_word_counts[topic, word_idx] -= 1
+                    self.topic_counts[topic] -= 1
+
+                    # Sample new topic assignment
+                    topic_probs = (self.document_topic_counts[d] + self.alpha) * \
+                                  (self.topic_word_counts[:, word_idx] + self.beta) / \
+                                  (self.topic_counts + self.beta * self.vocab_size)
+                    new_topic = np.random.choice(range(self.num_topics), p=topic_probs / np.sum(topic_probs))
+
+                    # Update counts
+                    self.document_topic_assignment[d][i] = new_topic
+                    self.document_topic_counts[d, new_topic] += 1
+                    self.topic_word_counts[new_topic, word_idx] += 1
+                    self.topic_counts[new_topic] += 1
+
+    def get_topics(self, num_top_words=10):
+        top_words = []
+        for topic_idx in range(self.num_topics):
+            word_probs = (self.topic_word_counts[topic_idx] + self.beta) / \
+                         (self.topic_counts[topic_idx] + self.beta * self.vocab_size)
+            top_word_idxs = np.argsort(word_probs)[::-1][:num_top_words]
+            top_words.append([self.idx2word[idx] for idx in top_word_idxs])
+        return top_words
+
+# Example usage
+documents = [
+    ['machine', 'learning', 'algorithms', 'are', 'very', 'interesting'],
+    ['natural', 'language', 'processing', 'is', 'another', 'interesting', 'field'],
+    ['topic', 'modeling', 'is', 'a', 'technique', 'in', 'NLP']
+]
+
+num_topics = 2
+num_iterations = 1000
+alpha = 0.1
+beta = 0.01
+
+lda = LDA(num_topics=num_topics, num_iterations=num_iterations, alpha=alpha, beta=beta)
+lda.fit(documents)
+topics = lda.get_topics(num_top_words=3)
+for i, topic in enumerate(topics):
+    print(f"Topic {i+1}: {topic}")

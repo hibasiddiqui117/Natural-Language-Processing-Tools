@@ -1,0 +1,42 @@
+import re
+
+def preprocess_text(text):
+    # Convert text to lowercase
+    text = text.lower()
+    # Remove punctuation
+    text = re.sub(r'[^\w\s]', '', text)
+    return text
+
+def find_answer(question, passage):
+    # Preprocess question and passage
+    question = preprocess_text(question)
+    passage = preprocess_text(passage)
+    
+    # Split the passage into sentences
+    sentences = passage.split('.')
+    
+    # Initialize variables to keep track of the best match
+    best_match = None
+    best_score = 0
+    
+    # Iterate through each sentence in the passage
+    for sentence in sentences:
+        # Preprocess the sentence
+        sentence = preprocess_text(sentence)
+        
+        # Calculate the score for this sentence based on the number of overlapping words
+        score = sum(word in question for word in sentence.split())
+        
+        # Update the best match if this sentence has a higher score
+        if score > best_score:
+            best_match = sentence
+            best_score = score
+    
+    # Return the best matching sentence as the answer
+    return best_match.strip()
+
+# Example usage
+passage = "Natural language processing (NLP) is a field of artificial intelligence that focuses on the interaction between computers and humans through natural language."
+question = "What is NLP?"
+answer = find_answer(question, passage)
+print("Answer:", answer)

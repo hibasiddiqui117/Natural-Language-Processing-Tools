@@ -1,0 +1,36 @@
+def clean_text(text):
+    # Convert text to lowercase
+    text = text.lower()
+    # Remove punctuation
+    punctuation = '''!()-[]{};:'"\,<>./?@#$%^&*_~'''
+    text = ''.join([char for char in text if char not in punctuation])
+    return text
+
+def calculate_sentiment(text):
+    # Clean the text
+    cleaned_text = clean_text(text)
+    # Split text into words
+    words = cleaned_text.split()
+    # Define positive and negative word lists
+    positive_words = ['good', 'great', 'excellent', 'happy', 'love']
+    negative_words = ['bad', 'poor', 'terrible', 'unhappy', 'hate']
+    # Initialize sentiment score
+    sentiment_score = 0
+    # Iterate through words and calculate sentiment score
+    for word in words:
+        if word in positive_words:
+            sentiment_score += 1
+        elif word in negative_words:
+            sentiment_score -= 1
+    # Classify sentiment based on score
+    if sentiment_score > 0:
+        return "Positive"
+    elif sentiment_score < 0:
+        return "Negative"
+    else:
+        return "Neutral"
+
+# Example usage
+text = "I love this product, it's excellent!"
+sentiment = calculate_sentiment(text)
+print("Sentiment:", sentiment)

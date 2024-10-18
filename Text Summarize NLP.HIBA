@@ -1,0 +1,49 @@
+import re
+from collections import Counter
+
+def tokenize(text):
+    # Tokenize the text into words
+    words = re.findall(r'\b\w+\b', text.lower())
+    return words
+
+def get_sentence_scores(sentences, word_frequencies):
+    # Calculate sentence scores based on word frequencies
+    sentence_scores = {}
+    for sentence in sentences:
+        for word in tokenize(sentence):
+            if word in word_frequencies:
+                if sentence not in sentence_scores:
+                    sentence_scores[sentence] = word_frequencies[word]
+                else:
+                    sentence_scores[sentence] += word_frequencies[word]
+    return sentence_scores
+
+def summarize(text, num_sentences=3):
+    # Tokenize text into words
+    words = tokenize(text)
+
+    # Calculate word frequencies
+    word_frequencies = Counter(words)
+    max_frequency = max(word_frequencies.values())
+    
+    # Normalize word frequencies
+    for word in word_frequencies:
+        word_frequencies[word] = word_frequencies[word] / max_frequency
+
+    # Tokenize text into sentences
+    sentences = re.split(r'(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s', text)
+
+    # Get sentence scores
+    sentence_scores = get_sentence_scores(sentences, word_frequencies)
+
+    # Sort sentences by scores and get top sentences
+    top_sentences = sorted(sentence_scores, key=sentence_scores.get, reverse=True)[:num_sentences]
+
+    # Join top sentences to form the summary
+    summary = ' '.join(top_sentences)
+    return summary
+
+# Example usage:
+text = "Artificial Intelligence (AI) is developing and advancing right before our very eyes. It has aggressively integrated into our society as it contributes heavily to a plethora of fields such as medical, legal, military, and government. Although AI is used universally as a resource and tool, it is less certain how advanced and dependable it will become. Likewise, society is still determining the implications it will have on the global dynamic. AI to enhance productivity and facilitate international development and diplomatic efforts. Diplomats who have served in various regions of the world have shared with ADST their views of AI in the workplace, the global sphere, and what the future could look like."
+summary = summarize(text)
+print(summary)
