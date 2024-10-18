@@ -1,0 +1,29 @@
+def generate_keyword_cloud(text):
+    # Step 1: Preprocess the text
+    cleaned_text = text.lower().split()
+
+    # Step 2: Count the frequency of each word
+    word_count = {}
+    for word in cleaned_text:
+        if word in word_count:
+            word_count[word] += 1
+        else:
+            word_count[word] = 1
+
+    # Step 3: Sort the words by frequency
+    sorted_words = sorted(word_count.items(), key=lambda x: x[1], reverse=True)
+
+    # Step 4: Generate the keyword cloud
+    max_frequency = max(word_count.values())
+    for word, frequency in sorted_words:
+        cloud_size = int((frequency / max_frequency) * 10)  # Adjust multiplier for different cloud sizes
+        print(f"{word}: {'*' * cloud_size}")
+
+# Example text
+text = """
+    Artificial intelligence (AI) is intelligence demonstrated by machines, in contrast to the natural intelligence displayed by humans and animals. 
+    Leading AI textbooks define the field as the study of "intelligent agents": any device that perceives its environment and takes actions that 
+    maximize its chance of successfully achieving its goals.
+    """
+# Step 5: Generate the keyword cloud
+generate_keyword_cloud(text)
