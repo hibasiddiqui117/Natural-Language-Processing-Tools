@@ -1,4 +1,4 @@
-# Natural-Language-Processing-Tools And Techniques 
+# Natural-Language-Processing-Techniques And Tools
 I have led and executed complex Natural Language Processing (NLP) projects, showcasing my expertise across a wide range of NLP techniques. I have developed and implemented various NLP projects that demonstrate my technical expertise and problem-solving abilities. My projects involve leveraging advanced NLP techniques for real-world applications, including:
 Semantic Search: Implemented robust search systems that understand user intent and deliver relevant results beyond keyword matching.
 Named Entity Recognition (NER): Built models to identify and classify key entities such as names, organisations, and locations in unstructured text data.
