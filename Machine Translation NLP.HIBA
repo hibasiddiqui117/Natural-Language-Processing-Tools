@@ -1,0 +1,89 @@
+import numpy as np
+
+class RNN:
+    def __init__(self, input_size, hidden_size, output_size):
+        self.hidden_size = hidden_size
+        self.Wxh = np.random.randn(hidden_size, input_size) * 0.01
+        self.Whh = np.random.randn(hidden_size, hidden_size) * 0.01
+        self.Why = np.random.randn(output_size, hidden_size) * 0.01
+        self.bh = np.zeros((hidden_size, 1))
+        self.by = np.zeros((output_size, 1))
+        
+    def forward(self, inputs):
+        hs = {}
+        hs[-1] = np.zeros((self.hidden_size, 1))
+        ys = {}
+        
+        for t, x in enumerate(inputs):
+            hs[t] = np.tanh(np.dot(self.Wxh, x) + np.dot(self.Whh, hs[t-1]) + self.bh)
+            ys[t] = np.dot(self.Why, hs[t]) + self.by
+        
+        return hs, ys
+    
+    def backward(self, inputs, targets, hs, ys):
+        dWxh, dWhh, dWhy = np.zeros_like(self.Wxh), np.zeros_like(self.Whh), np.zeros_like(self.Why)
+        dbh, dby = np.zeros_like(self.bh), np.zeros_like(self.by)
+        dhnext = np.zeros_like(hs[0])
+        
+        for t in reversed(range(len(inputs))):
+            dy = np.copy(ys[t])
+            dy[targets[t]] -= 1
+            dWhy += np.dot(dy, hs[t].T)
+            dby += dy
+            dh = np.dot(self.Why.T, dy) + dhnext
+            dhraw = (1 - hs[t] * hs[t]) * dh
+            dbh += dhraw
+            dWxh += np.dot(dhraw, inputs[t].T)
+            dWhh += np.dot(dhraw, hs[t-1].T)
+            dhnext = np.dot(self.Whh.T, dhraw)
+        
+        for dparam in [dWxh, dWhh, dWhy, dbh, dby]:
+            np.clip(dparam, -5, 5, out=dparam) # clip to mitigate exploding gradients
+        
+        return dWxh, dWhh, dWhy, dbh, dby
+    
+    def update(self, dWxh, dWhh, dWhy, dbh, dby, lr=0.1):
+        self.Wxh -= lr * dWxh
+        self.Whh -= lr * dWhh
+        self.Why -= lr * dWhy
+        self.bh -= lr * dbh
+        self.by -= lr * dby
+
+
+# Define vocabulary
+source_vocab = {'a': 0, 'b': 1, 'c': 2, 'd': 3, 'e': 4}
+target_vocab = {'w': 0, 'x': 1, 'y': 2, 'z': 3}
+
+# Training data
+training_data = [('abc', 'wxz'), ('de', 'yz')]
+
+# Hyperparameters
+input_size = len(source_vocab)
+hidden_size = 128
+output_size = len(target_vocab)
+learning_rate = 0.1
+epochs = 100
+
+# Initialize RNN
+rnn = RNN(input_size, hidden_size, output_size)
+
+# Training loop
+for epoch in range(epochs):
+    loss = 0
+    
+    for source, target in training_data:
+        inputs = [np.zeros((input_size, 1)) for _ in range(len(source))]
+        targets = [target_vocab[char] for char in target]
+        for t, char in enumerate(source):
+            inputs[t][source_vocab[char]] = 1
+        
+        hs, ys = rnn.forward(inputs)
+        
+        loss += sum(-np.log(ys[t][targets[t]][0]) for t in range(len(targets)))
+        
+        dWxh, dWhh, dWhy, dbh, dby = rnn.backward(inputs, targets, hs, ys)
+        rnn.update(dWxh, dWhh, dWhy, dbh, dby, lr=learning_rate)
+    
+    # Print loss every epoch
+    if epoch % 10 == 0:
+        print('Epoch %d, Loss: %f' % (epoch, loss))

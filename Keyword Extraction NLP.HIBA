@@ -1,0 +1,49 @@
+import re
+from collections import Counter
+
+def tokenize(text):
+    # Tokenize the text by splitting it into words
+    words = re.findall(r'\b\w+\b', text.lower())
+    return words
+
+def calculate_word_scores(sentences):
+    word_freq = Counter()
+    word_degree = Counter()
+    for sentence in sentences:
+        words = tokenize(sentence)
+        word_freq.update(words)
+        word_degree.update(set(words))
+    for word in word_freq:
+        word_degree[word] = word_degree[word] + word_freq[word]
+    word_scores = {}
+    for word in word_freq:
+        word_scores[word] = word_degree[word] / word_freq[word]
+    return word_scores
+
+def calculate_sentence_scores(sentences, word_scores):
+    sentence_scores = Counter()
+    for sentence in sentences:
+        words = tokenize(sentence)
+        for word in words:
+            if word in word_scores:
+                sentence_scores[sentence] += word_scores[word]
+    return sentence_scores
+
+def extract_keywords(text, num_keywords):
+    sentences = re.split(r'[.!?]', text)
+    word_scores = calculate_word_scores(sentences)
+    sentence_scores = calculate_sentence_scores(sentences, word_scores)
+    keywords = []
+    for sentence, score in sentence_scores.most_common(num_keywords):
+        keywords.extend(tokenize(sentence))
+    return keywords
+
+# Example usage
+text = """
+Natural language processing (NLP) is a field of artificial intelligence that helps computers understand, interpret, and manipulate human language. 
+NLP techniques are used to analyze text data and extract useful insights from it. 
+Keyword extraction is one of the important tasks in NLP, which involves identifying and extracting the most relevant words or phrases from a piece of text.
+"""
+
+keywords = extract_keywords(text, 5)
+print("Keywords:", keywords)
